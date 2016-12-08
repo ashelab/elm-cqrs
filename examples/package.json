@@ -1,0 +1,57 @@
+
+{
+  "name": "elm-cqrs",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+	"author": "Perry Birch",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ashelab/elm-cqrs"
+	},
+  "license": "Apache 2.0",
+  "main": "app.js",
+  "scripts": {
+    "clean": "rimraf dist node_modules elm-stuff tests/elm-stuff",
+    "prebuild": "rimraf dist",
+    "build": "webpack",
+    "build-ci": "elm-package sinstall --yes && npm run build && npm run build-css && npm run build-test-html",
+    "build-css": "shx mkdir -p ./dist && elm-css src/Stylesheets.elm -o ./dist",
+    "build-test-html": "cd tests && elm-make --yes TestRunnerHtml.elm",
+    "start": "webpack-dev-server --content-base src/ --port 8000 --hot",
+    "test-console": "elm-test ../tests/TestRunnerConsole.elm || true",
+    "test-html": "cd tests && elm-reactor",
+    "test": "webpack-dev-server --content-base ../tests/ --port 9000",
+    "docs": "elm-make --docs=docs.json"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+		"autoprefixer": "6.5.3",
+    "clean-webpack-plugin": "0.1.14",
+    "compression-webpack-plugin": "0.3.2",
+    "copy-webpack-plugin": "4.0.1",
+		"css-loader": "0.26.1",
+		"elm": "0.18.0",
+    "elm-css": "0.6.0",
+    "elm-css-webpack-loader": "2.0.2",
+		"elm-hot-loader": "0.5.3",
+    "elm-test": "0.18.2",
+    "elm-webpack-loader": "3.1.0",
+		"extract-text-webpack-plugin": "1.0.1",
+    "file-loader": "0.9.0",
+		"html-webpack-plugin": "2.24.1",
+    "node-sass": "3.13.0",
+    "postcss-loader": "1.2.0",
+    "raw-loader": "0.5.1",
+    "rimraf": "2.5.4",
+    "sass-loader": "4.0.2",
+    "shx": "0.2.1",
+    "style-loader": "0.13.1",
+		"url-loader": "0.5.7",
+    "unminified-webpack-plugin": "1.1.1",
+    "webpack": "1.13.3",
+    "webpack-dev-server": "1.16.2",
+		"webpack-merge": "1.0.2"
+  }
+}
