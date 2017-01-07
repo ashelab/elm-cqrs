@@ -1,8 +1,8 @@
 {
-    "version": "1.0.1",
+    "version": "2.0.0",
     "summary": "CQRS Variant of Elm Architecture",
     "repository": "https://github.com/ashelab/elm-cqrs.git",
-    "license": "BSD3",
+    "license": "Apache 2.0",
     "source-directories": [
         "src"
     ],
