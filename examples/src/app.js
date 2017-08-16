@@ -4,7 +4,7 @@
 
 require( './Stylesheets' );
 
-var page = [ 'TodoList' ];
+var page = [ 'List' ];
 
 var settings = {
   env: 'dev'

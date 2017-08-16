@@ -1,4 +1,4 @@
-module TodoList.Style
+module List.Style
     exposing
         ( CssClasses(..)
         , CssIds(..)
@@ -21,7 +21,7 @@ type CssIds
 
 cssNamespace : Namespace String a b c
 cssNamespace =
-    withNamespace "TodoList_"
+    withNamespace "Todo_List_"
 
 css : Stylesheet
 css =
@@ -30,3 +30,5 @@ css =
             [
             ]
         ]
+
+

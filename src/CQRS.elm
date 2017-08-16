@@ -1,4 +1,4 @@
-module CQRS exposing (Definition, NavDefinition, State, program, programWithNav, eventBinder)
+module CQRS exposing (Definition, NavDefinition, State, eventBinder, program, programWithNav, stateMap)
 
 {-| The CQRS library provides an alternate set of methods for union routing and model updating based upon the precepts of CQRS and EventSourcing
 
@@ -9,9 +9,11 @@ module CQRS exposing (Definition, NavDefinition, State, program, programWithNav,
 
 
 # Program Bootloaders
+@docs eventBinder
+@docs stateMap
 @docs program
 @docs programWithNav
-@docs eventBinder
+
 -}
 
 import Html exposing (Html)
@@ -38,10 +40,10 @@ subscriptions:  Segregated handler to receive incoming side effects from the out
 type alias Definition context model command event effect =
     { decode : context -> model
     , encode : model -> context
-    , init : model -> ( model, effect )
+    , init : model -> ( model, Maybe effect )
     , view : model -> Html command
     , commandMap : model -> command -> event
-    , eventMap : model -> event -> ( model, effect )
+    , eventMap : model -> event -> ( model, Maybe effect )
     , eventHandler : ( model, effect ) -> Cmd command
     , subscriptions : model -> Sub command
     }
@@ -62,22 +64,27 @@ type alias State model =
     { state : model
     }
 
+{-|
+stateMap applies a modifier function to the content of a state container
+-}
+stateMap :
+    ( model -> model )
+    -> { container | state : model }
+    -> { container | state : model }
+stateMap mapFunc value =
+    { value | state = mapFunc value.state }
+
 -- {-|
+-- Describes a structure which composes a child property containing nested state 
 -- -}
--- type alias EventMap model event effect =
---     model -> event -> ( model, effect )
+-- type alias StateContainer container model =
+--     { container | state : model }
 
-{-|
-Describes a structure which composes a child property containing nested state 
--}
-type alias StateContainer container model =
-    { container | state : model }
+-- {-|
 
-{-|
-
--}
-type alias StateMap model effect container containerEffect =
-    ( model, effect ) -> ( StateContainer container model, containerEffect )
+-- -}
+-- type alias StateMap model effect container containerEffect =
+--     ( model, effect ) -> ( StateContainer container model, containerEffect )
 
 
 {-|
@@ -116,25 +123,28 @@ programWithNav nav def =
 -}
 initFunc :
     (context -> model)
-    -> (model -> ( model, effect ))
+    -> (model -> ( model, Maybe effect ))
     -> (( model, effect ) -> Cmd command)
     -> (context -> ( model, Cmd command ))
 initFunc decode init eventHandler context =
     let
         ( model, effect ) =
             init <| decode context
-
-        effect_ =
-            eventHandler ( model, effect )
     in
-        ( model, effect_ )
+        case effect of
+            Nothing ->
+                ( model, Cmd.none )
+
+            Just effect_ ->
+                ( model, eventHandler ( model, effect_ ) )
+
 
 {-|
 -}
 routerInitFunc :
     (state -> Location -> context)
     -> (context -> model)
-    -> (model -> ( model, effect ))
+    -> (model -> ( model, Maybe effect ))
     -> (( model, effect ) -> Cmd command)
     -> (state -> Location -> ( model, Cmd command ))
 routerInitFunc router decode init eventHandler state location =
@@ -144,17 +154,19 @@ routerInitFunc router decode init eventHandler state location =
 
         ( model, effect ) =
             init <| decode context
-
-        effect_ =
-            eventHandler ( model, effect )
     in
-        ( model, effect_ )
+        case effect of
+            Nothing ->
+                ( model, Cmd.none )
+            Just effect_ ->
+                ( model, eventHandler ( model, effect_ ) )
+
 
 {-|
 -}
 updateFunc :
     (model -> command -> event)
-    -> (model -> event -> ( model, effect ))
+    -> (model -> event -> ( model, Maybe effect ))
     -> (( model, effect ) -> Cmd command)
     -> (command -> model -> ( model, Cmd command ))
 updateFunc commandMap eventMap eventHandler command model =
@@ -164,24 +176,28 @@ updateFunc commandMap eventMap eventHandler command model =
 
         ( resultModel, effect ) =
             eventMap model event
-
-        effect_ =
-            eventHandler ( resultModel, effect )
     in
-        ( resultModel, effect_ )
+        case effect of
+            Nothing ->
+                ( resultModel, Cmd.none )
+            Just effect_ ->
+                ( resultModel, eventHandler ( resultModel, effect_ ) )
 
 {-|
 Simplifies the syntax for mapping of Events from parent components to child components
 -}
 eventBinder :
-    (model -> event -> ( model, effect ))
+    (model -> event -> ( model, Maybe effect ))
     -> { container | state : model }
-    -> (( { container | state : model }, effect ) -> containerEffect)
+    -> ({ container | state : model } -> parentModel)
+    -> (effect -> containerEffect)
     -> event
-    -> containerEffect
-eventBinder eventMap container containerMap event =
+    -> (parentModel, Maybe containerEffect)
+eventBinder eventMap getter setter effectMap event =
     let
         ( model, effect ) =
-            eventMap container.state event
+            eventMap getter.state event
     in
-        containerMap ( { container | state = model }, effect )
+        ( setter { getter | state = model }
+        , Maybe.map effectMap effect
+        )    

@@ -6,14 +6,7 @@ exports.context = {
     }
     return state
   },
-  ports: ports
-}
-
-function ports(settings, app, state) {
-}
-
-function todoItem(title) {
-  return { title: title
+  ports: function(settings, app, state) {
   }
 }
 
